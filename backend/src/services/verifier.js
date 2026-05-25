@@ -1,7 +1,7 @@
-const Anthropic = require('@anthropic-ai/sdk');
+const Groq = require('groq-sdk');
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const client = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 async function verifier(claim, searchResults) {
@@ -26,13 +26,15 @@ async function verifier(claim, searchResults) {
       };
     }
 
-    // Call Claude to verify
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+    // Call Groq to verify
+    const response = await client.chat.completions.create({
+      model: 'mixtral-8x7b-32768',
       max_tokens: 1024,
-      system:
-        'You are a fact-verification expert. Analyze the claim against the provided web search results and determine accuracy.',
       messages: [
+        {
+          role: 'system',
+          content: 'You are a fact-verification expert. Analyze the claim against the provided web search results and determine accuracy.',
+        },
         {
           role: 'user',
           content: `Claim: "${claim}"
@@ -54,7 +56,7 @@ Respond ONLY with the JSON object. No markdown, no preamble.`,
       ],
     });
 
-    const content = response.content[0].text;
+    const content = response.choices[0].message.content;
     const parsed = JSON.parse(content);
 
     return {
