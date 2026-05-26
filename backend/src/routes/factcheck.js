@@ -43,7 +43,7 @@ router.post('/factcheck', upload.single('file'), async (req, res) => {
     } catch (error) {
       console.error('[factcheck] PDF extraction failed:', error.message);
       return res.status(400).json({
-        error: 'Failed to extract text from PDF. Please ensure it contains readable text.',
+        error: error.message,
       });
     }
 
