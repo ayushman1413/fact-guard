@@ -1,0 +1,61 @@
+# ==============================================================================
+# FactGuard - System and Dependency Requirements
+# ==============================================================================
+# This file lists the system environments and package dependencies required to
+# run the FactGuard Fact-Checking Web App.
+# Since FactGuard is built using Node.js, these requirements represent the
+# specifications contained in package.json files.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. System Requirements
+# ------------------------------------------------------------------------------
+node>=18.0.0
+npm>=9.0.0
+mongodb>=6.0.0       # Optional: only required for persistent report database
+
+# ------------------------------------------------------------------------------
+# 2. Backend Dependencies (Node.js/Express)
+# ------------------------------------------------------------------------------
+# API SDKs & HTTP client
+groq-sdk==1.2.0      # Access to Groq API (Llama-3.3-70b model)
+axios==1.6.2         # Promise-based HTTP client for Tavily Web Search API
+@anthropic-ai/sdk==0.24.3 # Optional: SDK for Anthropic Claude models
+
+# Core framework
+express==4.18.2      # Web framework for the API server
+cors==2.8.5          # Middleware to enable Cross-Origin Resource Sharing
+dotenv==16.3.1       # Load environment variables from .env files
+
+# Middlewares & Utilities
+multer==1.4.5-lts.1  # Middleware for handling multipart/form-data (file uploads)
+pdf-parse==1.1.1     # PDF text extraction from buffers in memory
+express-async-errors==3.1.1 # Asynchronous error handler for Express routes
+nodemon==3.0.2       # Development dependency: Auto-restart server on file changes
+
+# Database
+mongoose==8.0.3      # MongoDB object modeling (ODM) tool
+mongodb==7.2.0       # Native MongoDB driver for Node.js
+
+# ------------------------------------------------------------------------------
+# 3. Frontend Dependencies (React/Vite/Tailwind CSS)
+# ------------------------------------------------------------------------------
+# Core library
+react==18.3.1
+react-dom==18.3.1
+
+# UI Utilities & Styling
+tailwindcss==3.4.1   # Utility-first CSS framework
+postcss==8.4.32      # Tool for transforming CSS with JavaScript
+autoprefixer==10.4.16 # Add vendor prefixes to CSS rules
+lucide-react==0.376.0 # Beautiful & consistent SVG icon library
+framer-motion==10.16.16 # Animation library for smooth, premium UI transitions
+react-dropzone==14.2.3 # Drag-and-drop file upload zone component
+vite==5.0.8          # Next-generation frontend build tool and dev server
+@vitejs/plugin-react==4.2.1 # Official Vite plugin for React Support
+
+# ------------------------------------------------------------------------------
+# 4. Mandatory API Keys (Free Tier Available)
+# ------------------------------------------------------------------------------
+# - GROQ_API_KEY: Get from https://console.groq.com/keys
+# - TAVILY_API_KEY: Get from https://tavily.com
