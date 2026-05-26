@@ -8,9 +8,25 @@ const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
 
-// Middleware
-app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
-app.use(express.json());
+// CORS — allow both local dev and deployed frontend
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all in dev; tighten for production
+    }
+  },
+  credentials: true,
+}));
+app.use(express.json({ limit: '15mb' }));
 
 // Health check
 app.get('/', (req, res) => {

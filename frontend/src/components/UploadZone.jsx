@@ -56,7 +56,7 @@ export default function UploadZone({ onFileSelect, onAnalyze, isAnalyzing }) {
           }`}></div>
           
           {/* Content */}
-          <div className="relative p-16 text-center">
+          <div className="relative p-8 sm:p-10 text-center">
             <input {...getInputProps()} />
             
             <motion.div

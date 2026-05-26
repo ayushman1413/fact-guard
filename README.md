@@ -1,8 +1,42 @@
 # FactGuard — AI-Powered Fact Checking Agent
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success?style=flat-square)](https://your-frontend.vercel.app)
+[![Live Demo](https://img.shields.io/badge/demo-live-success?style=flat-square)](https://fact-guards.vercel.app)
 [![GitHub](https://img.shields.io/badge/github-repo-blue?style=flat-square)](https://github.com/your-username/factguard)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+
+## ⚡ Quick Start (5 Minutes)
+
+### 1. Get API Keys (Free!)
+- **Groq API** (Free, unlimited): [console.groq.com/keys](https://console.groq.com/keys) — Sign up with GitHub
+- **Tavily Search** (Free tier: 1000 searches/month): [tavily.com](https://tavily.com)
+
+### 2. Local Setup
+```bash
+# Clone repository
+git clone <your-repo-url>
+cd factguard
+
+# Backend
+cd backend
+cp .env.example .env
+# Edit .env and add your API keys
+npm install
+npm run dev  # Runs on http://localhost:5000
+
+# In another terminal, Frontend
+cd frontend
+cp .env.example .env
+# VITE_API_URL should be http://localhost:5000
+npm install
+npm run dev  # Runs on http://localhost:5173
+```
+
+### 3. Test It
+- Open [http://localhost:5173](http://localhost:5173)
+- Drag & drop a PDF with facts/claims
+- Watch the magic happen! 🎩✨
+
+---
 
 ## Overview
 
@@ -11,13 +45,14 @@ FactGuard is a production-ready web application that automatically fact-checks P
 ## Features
 
 - **📄 PDF Upload with Drag & Drop** — Intuitive drag-and-drop interface with file preview
-- **🤖 AI-Powered Claim Extraction** — Claude AI extracts specific factual claims (statistics, dates, financial figures)
+- **🤖 AI-Powered Claim Extraction** — Groq Llama 3.3 AI extracts specific factual claims (statistics, dates, financial figures)
 - **🌐 Live Web Verification** — Tavily Search API searches the latest web data for each claim in parallel
 - **✅ Three-Tier Verdict System** — Claims marked as Verified, Inaccurate, or False with explanations
 - **⚡ Parallel Processing** — All claims verified simultaneously for maximum speed
 - **📊 Detailed Reports** — Interactive results table with source links and corrections
 - **💾 Optional Report Storage** — MongoDB integration for storing and retrieving past reports
 - **🚀 Fully Deployed** — Production-ready deployment on Vercel (frontend) + Render (backend)
+- **💰 Cost-Effective** — Uses free-tier APIs (Groq unlimited, Tavily 1000/month free)
 
 ## Tech Stack
 
@@ -25,7 +60,7 @@ FactGuard is a production-ready web application that automatically fact-checks P
 |-------|-----------|
 | **Frontend** | React 18, Vite, Tailwind CSS, Framer Motion, Axios, React Dropzone, Lucide Icons |
 | **Backend** | Node.js 18+, Express.js, Multer, pdf-parse |
-| **AI & Search** | Claude (Anthropic), Tavily Search REST API |
+| **AI & Search** | Groq API (Llama 3.3 70B), Tavily Search REST API |
 | **Database** | MongoDB Atlas (optional) with Mongoose |
 | **Deployment** | Vercel (Frontend), Render (Backend) |
 
@@ -46,9 +81,9 @@ FactGuard is a production-ready web application that automatically fact-checks P
         ┌──────────────┼──────────────┐
         ▼              ▼              ▼
    ┌────────┐   ┌──────────┐   ┌──────────┐
-   │ Multer │   │ pdf-parse│   │ Claude   │
-   │  (PDF) │──▶│(Extract) │──▶│(Extract  │
-   └────────┘   │  Text    │   │ Claims)  │
+   │ Multer │   │ pdf-parse│   │ Groq API │
+   │  (PDF) │──▶│(Extract) │──▶│(Llama 3.3│
+   └────────┘   │  Text    │   │ Extract) │
                 └──────────┘   └──────────┘
                                     │
                                     │ Claims Array
@@ -60,9 +95,9 @@ FactGuard is a production-ready web application that automatically fact-checks P
         ┌──────────┴──────────┐
         ▼                     ▼
   ┌──────────────┐     ┌────────────┐
-  │ Tavily Search│     │ Claude AI  │
-  │ (Web Search) │────▶│ (Verify    │
-  └──────────────┘     │  Claim)    │
+  │ Tavily Search│     │ Groq API   │
+  │ (Web Search) │────▶│ (Llama 3.3 │
+  └──────────────┘     │ Verify)    │
                        └────────────┘
                             │
                             │ Verdict
@@ -97,8 +132,8 @@ npm run dev            # Runs on localhost:5000
 
 **Required Environment Variables:**
 ```env
-ANTHROPIC_API_KEY=your_anthropic_key
-TAVILY_API_KEY=your_tavily_key
+GROQ_API_KEY=your_groq_api_key
+TAVILY_API_KEY=your_tavily_api_key
 MONGODB_URI=your_mongodb_uri (optional)
 FRONTEND_URL=http://localhost:5173
 PORT=5000
@@ -117,7 +152,7 @@ npm run dev            # Runs on localhost:5173
 
 | Variable | Description | Where to Get |
 |----------|-------------|-------------|
-| `ANTHROPIC_API_KEY` | Claude API key for claim extraction & verification | [console.anthropic.com](https://console.anthropic.com) |
+| `GROQ_API_KEY` | Groq API key for Llama 3.3 AI (free tier: unlimited) | [console.groq.com](https://console.groq.com/keys) |
 | `TAVILY_API_KEY` | Tavily Search API for web lookup (1000 searches/month free) | [tavily.com](https://tavily.com) |
 | `MONGODB_URI` | MongoDB Atlas connection string (optional, app works without it) | [mongodb.com/atlas](https://mongodb.com/atlas) |
 | `FRONTEND_URL` | Backend CORS origin for frontend domain (Render → Vercel) | Your Vercel deployment URL |
@@ -211,11 +246,12 @@ file: <PDF file>
 
 ## How to Get API Keys
 
-### 1. Anthropic API Key
-- Go to [console.anthropic.com](https://console.anthropic.com)
-- Sign up or log in
+### 1. Groq API Key (Recommended - Free & Unlimited)
+- Go to [console.groq.com](https://console.groq.com/keys)
+- Sign up or log in with GitHub
 - Navigate to **API Keys**
 - Create a new key and copy it
+- **No credit card required, completely free tier**
 
 ### 2. Tavily Search API Key
 - Visit [tavily.com](https://tavily.com)

@@ -39,19 +39,20 @@ async function retryWithBackoff(fn, maxRetries = 3, initialDelayMs = 1000) {
 
 async function claimExtractor(text) {
   try {
-    // Optimize: Reduce text size and max tokens
+    // Optimize: Reduce text size and max tokens for speed
     const response = await retryWithBackoff(() =>
       client.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
-        max_completion_tokens: 256, // Reduced from 512 - still gets ~10 claims
+        max_completion_tokens: 200, // Reduced from 256 - still gets enough claims
         messages: [
           {
             role: 'system',
-            content: `Extract factual claims with numbers: stats, dates, money, tech specs. Return ONLY JSON array. No markdown.`,
+            content: `Extract 5-8 factual claims with numbers: stats, dates, money, tech specs. 
+Respond ONLY with JSON array, no markdown: [{"claim":"..."}]`,
           },
           {
             role: 'user',
-            content: text.slice(0, 5000), // Reduced from 10000 - still enough for claims
+            content: `Extract claims:\n${text.slice(0, 3000)}`, // Reduced from 5000 for speed
           },
         ],
       })
@@ -61,17 +62,23 @@ async function claimExtractor(text) {
     const jsonString = extractJSON(content);
     let parsed = JSON.parse(jsonString);
     
-    // Limit to top 10 claims to save tokens on verification
-    if (Array.isArray(parsed) && parsed.length > 10) {
-      console.log(`[claimExtractor] Limiting ${parsed.length} claims to top 10`);
-      parsed = parsed.slice(0, 10);
+    // Ensure it's an array
+    if (!Array.isArray(parsed)) {
+      parsed = [parsed];
+    }
+    
+    // Limit to 8 claims for speed
+    if (parsed.length > 8) {
+      console.log(`[claimExtractor] Limiting ${parsed.length} claims to top 8 for speed`);
+      parsed = parsed.slice(0, 8);
     }
 
-    if (!Array.isArray(claims)) {
-      console.warn('[claimExtractor] Response was not an array, treating as empty');
-      return [];
-    }
+    // Extract claim text
+    const claims = parsed.map(item => 
+      typeof item === 'string' ? item : (item.claim || JSON.stringify(item))
+    ).filter(c => c && c.length > 5);
 
+    console.log(`[claimExtractor] Extracted ${claims.length} claims`);
     return claims;
   } catch (error) {
     console.error('[claimExtractor] Error extracting claims:', error.message);

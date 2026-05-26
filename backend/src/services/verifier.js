@@ -53,14 +53,14 @@ function checkLocalVerification(claim, searchResults) {
 }
 
 // Helper function to retry with exponential backoff
-async function retryWithBackoff(fn, maxRetries = 3, initialDelayMs = 1000) {
+async function retryWithBackoff(fn, maxRetries = 2, initialDelayMs = 300) {
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await fn();
     } catch (error) {
-      if (error.status === 429 && i < maxRetries - 1) {
+      if ((error.status === 429 || error.message?.includes('rate')) && i < maxRetries - 1) {
         const delayMs = initialDelayMs * Math.pow(2, i);
-        console.log(`[verifier] Rate limited, retrying in ${delayMs}ms...`);
+        console.log(`[verifier] Rate limited, retry in ${delayMs}ms`);
         await new Promise(resolve => setTimeout(resolve, delayMs));
       } else {
         throw error;
@@ -101,19 +101,17 @@ async function verifier(claim, searchResults) {
     const response = await retryWithBackoff(() =>
       client.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
-        max_completion_tokens: 150, // Reduced from 400
+        max_completion_tokens: 100, // Reduced from 150 - we only need status + brief explanation
         messages: [
           {
             role: 'system',
-            content: 'Verify claim vs search results. Respond: {"status":"Verified|Inaccurate|False","explanation":"reason","correct_fact":"","source":""}',
+            content: 'Quick fact check. Respond JSON: {"status":"Verified|Inaccurate|False","explanation":"brief reason","correct_fact":"","source":""}',
           },
           {
             role: 'user',
-            content: `Claim: "${claim.slice(0, 100)}"
-
-Results: ${formattedResults.slice(0, 500)}
-
-JSON only:`,
+            content: `Check: "${claim.slice(0, 80)}"
+            
+Evidence: ${formattedResults.slice(0, 300)}`,
           },
         ],
       })

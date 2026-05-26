@@ -9,8 +9,8 @@ const Report = require('../models/Report');
 
 const router = express.Router();
 const VERIFICATION_MODE = process.env.VERIFICATION_MODE || 'demo';
-const MAX_CLAIMS_PER_PDF = parseInt(process.env.MAX_CLAIMS_PER_PDF || '10');
-const RATE_LIMIT_DELAY = parseInt(process.env.RATE_LIMIT_DELAY || '300');
+const MAX_CLAIMS_PER_PDF = parseInt(process.env.MAX_CLAIMS_PER_PDF || '8'); // Reduced from 10 for speed
+const RATE_LIMIT_DELAY = parseInt(process.env.RATE_LIMIT_DELAY || '0'); // Reduced from 300 - using parallel now
 
 // Configure multer for memory storage
 const upload = multer({
@@ -89,50 +89,60 @@ router.post('/factcheck', upload.single('file'), async (req, res) => {
       claims = claims.slice(0, MAX_CLAIMS_PER_PDF);
     }
 
-    // Verify all claims with rate limiting to avoid hitting API limits
-    console.log(`[factcheck] Starting verification of ${claims.length} claims (mode: ${VERIFICATION_MODE})...`);
-    const results = [];
+    // Verify all claims in parallel for speed
+    console.log(`[factcheck] Starting PARALLEL verification of ${claims.length} claims (mode: ${VERIFICATION_MODE})...`);
     
-    // Process sequentially with delays to reduce rate limit issues
-    for (let idx = 0; idx < claims.length; idx++) {
-      const claim = claims[idx];
+    // Process all claims in parallel
+    const verificationPromises = claims.map(async (claim, idx) => {
       try {
-        // Add small delay between requests to avoid rate limits
-        if (idx > 0) {
-          await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
-        }
-        
         console.log(`[factcheck] Verifying claim ${idx + 1}/${claims.length}: "${claim.substring(0, 50)}..."`);
         
-        // In mock mode, skip web search
+        // In mock mode, skip web search (instant results)
         let verification;
         if (VERIFICATION_MODE === 'mock') {
           verification = await mockVerifier(claim);
         } else {
+          // For production: search web + verify (with small stagger to avoid rate limits)
+          // Stagger requests by 50ms to avoid overwhelming the API
+          await new Promise(resolve => setTimeout(resolve, idx * 50));
+          
           const searchResults = await webSearcher(claim);
           verification = await verifier(claim, searchResults);
         }
         
-        results.push({
+        return {
           claim,
           ...verification,
-        });
+        };
       } catch (error) {
-        console.error(`[factcheck] Error verifying claim ${idx + 1}:`, error.message);
-        results.push({
+        console.error(`[factcheck] Error verifying claim "${claim.substring(0, 50)}...":`, error.message);
+        return {
           claim,
-          status: 'Error',
-          explanation: 'Verification failed',
+          status: 'Unverifiable',
+          explanation: `Verification failed: ${error.message || 'Unknown error'}`,
           correct_fact: '',
           source: '',
-        });
+        };
       }
-    }
+    });
+
+    // Wait for all verifications to complete (in parallel!)
+    console.log(`[factcheck] ⏱️  Processing ${claims.length} claims in parallel...`);
+    const startTime = Date.now();
+    
+    const results = await Promise.all(verificationPromises);
+    
+    const elapsed = Math.round((Date.now() - startTime) / 1000);
+    console.log(`[factcheck] ✅ Verification complete in ${elapsed}s`);
 
     // Count verdicts
     const verified = results.filter((r) => r.status === 'Verified').length;
     const inaccurate = results.filter((r) => r.status === 'Inaccurate').length;
     const false_count = results.filter((r) => r.status === 'False').length;
+    const unverifiable = results.filter((r) => r.status === 'Unverifiable').length;
+
+    // Calculate accuracy score
+    const accuracyScore = results.length > 0 ? Math.round((verified / results.length) * 100) : 0;
 
     const reportData = {
       filename: req.file.originalname,
@@ -140,11 +150,15 @@ router.post('/factcheck', upload.single('file'), async (req, res) => {
       verified,
       inaccurate,
       false_count,
+      unverifiable,
+      accuracy_score: accuracyScore,
+      processing_time_seconds: elapsed,
+      extracted_text: text.substring(0, 2000), // First 2000 chars for preview
       processed_at: new Date(),
       claims: results,
     };
 
-    console.log(`[factcheck] Analysis complete: ${verified} verified, ${inaccurate} inaccurate, ${false_count} false`);
+    console.log(`[factcheck] Analysis complete: ${verified} verified, ${inaccurate} inaccurate, ${false_count} false (${accuracyScore}% accurate)`);
 
     // Save to MongoDB (non-blocking)
     if (process.env.MONGODB_URI) {
