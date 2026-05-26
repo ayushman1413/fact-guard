@@ -19,6 +19,11 @@ async function retryWithBackoff(fn, maxRetries = 2, initialDelayMs = 500) {
 
 async function webSearcher(claim) {
   try {
+    if (!process.env.TAVILY_API_KEY) {
+      console.error('[webSearcher] TAVILY_API_KEY is not set');
+      return [];
+    }
+
     const response = await retryWithBackoff(() =>
       axios.post(
         'https://api.tavily.com/search',
@@ -26,28 +31,42 @@ async function webSearcher(claim) {
           api_key: process.env.TAVILY_API_KEY,
           query: claim,
           search_depth: 'basic',
-          max_results: 3, // Reduced from 5 to 3 for speed
+          max_results: 3,
           include_answer: true,
         },
         {
           headers: { 'Content-Type': 'application/json' },
-          timeout: 8000, // 8 second timeout per request
+          timeout: 10000, // 10 second timeout
         }
       )
     );
 
-    if (!response.data.results) {
+    if (!response.data || !response.data.results) {
+      console.warn('[webSearcher] No results in response for:', claim.substring(0, 50));
       return [];
     }
 
-    return response.data.results.map((r) => ({
+    const results = response.data.results.map((r) => ({
       title: r.title || '',
       url: r.url || '',
-      content: (r.content || '').slice(0, 300), // Limit content size for speed
+      content: (r.content || '').slice(0, 500),
     }));
+
+    console.log(`[webSearcher] Found ${results.length} results for: "${claim.substring(0, 50)}..."`);
+    return results;
   } catch (error) {
-    console.error('[webSearcher] Error searching web for claim:', error.message);
-    return []; // Return empty on error, verifier will mark as Unverifiable
+    const status = error.response?.status;
+    const msg = error.response?.data?.message || error.message;
+    
+    if (status === 401 || status === 403) {
+      console.error(`[webSearcher] Authentication error (${status}): Invalid TAVILY_API_KEY`);
+    } else if (status === 429) {
+      console.error('[webSearcher] Rate limited by Tavily API');
+    } else {
+      console.error(`[webSearcher] Error searching for "${claim.substring(0, 40)}...": ${msg}`);
+    }
+    
+    return [];
   }
 }
 

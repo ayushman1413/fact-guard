@@ -103,8 +103,8 @@ router.post('/factcheck', upload.single('file'), async (req, res) => {
           verification = await mockVerifier(claim);
         } else {
           // For production: search web + verify (with small stagger to avoid rate limits)
-          // Stagger requests by 50ms to avoid overwhelming the API
-          await new Promise(resolve => setTimeout(resolve, idx * 50));
+          // Stagger requests by 200ms to avoid overwhelming the API
+          await new Promise(resolve => setTimeout(resolve, idx * 200));
           
           const searchResults = await webSearcher(claim);
           verification = await verifier(claim, searchResults);

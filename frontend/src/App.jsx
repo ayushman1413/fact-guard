@@ -7,7 +7,7 @@ import Loader from './components/Loader';
 import DashboardStats from './components/DashboardStats';
 import PDFPreview from './components/PDFPreview';
 import ResultsTable from './components/ResultsTable';
-import { AlertCircle, RotateCcw } from 'lucide-react';
+import { AlertCircle, RotateCcw, Shield, Heart, ExternalLink } from 'lucide-react';
 
 export default function App() {
   const [file, setFile] = useState(null);
@@ -102,7 +102,7 @@ export default function App() {
     <div className="flex flex-col min-h-screen bg-bg-base">
       <Header />
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-y-auto">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 pb-16 md:pb-24">
         <AnimatePresence mode="wait">
           {status === 'idle' && (
             <motion.div
@@ -261,41 +261,101 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      <footer className="w-full border-t border-slate-700/60 bg-slate-900/60 backdrop-blur-sm flex-shrink-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-            <div>
-              <h3 className="text-white font-bold mb-2 text-sm">FactGuard</h3>
-              <p className="text-slate-400 text-xs leading-relaxed">AI-powered fact-checking for the modern web.</p>
+      <footer className="w-full relative z-10 border-t border-slate-800 bg-[#0B0F19]/90 backdrop-blur-md flex-shrink-0 mt-auto">
+        {/* Symmetric visual connection with Header: Top glowing gradient accent line */}
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-primary/40 to-transparent"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-6 mb-10">
+            {/* Branding Column */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="bg-gradient-to-br from-brand-primary to-brand-hover p-1 rounded-md">
+                  <Shield className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-white font-extrabold tracking-wider text-sm">FactGuard</span>
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse inline-block" title="System Status: Online"></span>
+              </div>
+              <p className="text-slate-400 text-xs leading-relaxed max-w-xs">
+                Next-generation truth verification platform powered by state-of-the-art AI agents checking facts against live web data in real time.
+              </p>
             </div>
+
+            {/* Features Column */}
             <div>
-              <h4 className="text-slate-300 font-semibold text-xs mb-2">Features</h4>
-              <ul className="text-slate-400 text-xs space-y-1">
-                <li><a href="#" className="hover:text-slate-200 transition">PDF Analysis</a></li>
-                <li><a href="#" className="hover:text-slate-200 transition">Real-time Verification</a></li>
-                <li><a href="#" className="hover:text-slate-200 transition">Web Search Integration</a></li>
+              <h4 className="text-slate-200 font-bold text-xs uppercase tracking-wider mb-4">Features</h4>
+              <ul className="space-y-2.5">
+                {[
+                  { name: 'PDF Analysis', href: '#' },
+                  { name: 'Real-time Verification', href: '#' },
+                  { name: 'Web Search Integration', href: '#' }
+                ].map((link, idx) => (
+                  <li key={idx}>
+                    <a 
+                      href={link.href} 
+                      className="text-slate-400 hover:text-brand-primary transition-all duration-300 text-xs flex items-center gap-1 group"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-700 group-hover:bg-brand-primary transition-colors"></span>
+                      <span className="group-hover:translate-x-1 transition-transform duration-300">{link.name}</span>
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
+
+            {/* Resources Column */}
             <div>
-              <h4 className="text-slate-300 font-semibold text-xs mb-2">Resources</h4>
-              <ul className="text-slate-400 text-xs space-y-1">
-                <li><a href="#" className="hover:text-slate-200 transition">Documentation</a></li>
-                <li><a href="#" className="hover:text-slate-200 transition">API Reference</a></li>
-                <li><a href="#" className="hover:text-slate-200 transition">Support</a></li>
+              <h4 className="text-slate-200 font-bold text-xs uppercase tracking-wider mb-4">Resources</h4>
+              <ul className="space-y-2.5">
+                {[
+                  { name: 'Documentation', href: '#' },
+                  { name: 'API Reference', href: '#' },
+                  { name: 'Support Center', href: '#' }
+                ].map((link, idx) => (
+                  <li key={idx}>
+                    <a 
+                      href={link.href} 
+                      className="text-slate-400 hover:text-brand-primary transition-all duration-300 text-xs flex items-center gap-1 group"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-700 group-hover:bg-brand-primary transition-colors"></span>
+                      <span className="group-hover:translate-x-1 transition-transform duration-300">{link.name}</span>
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
+
+            {/* Legal / Contact Column */}
             <div>
-              <h4 className="text-slate-300 font-semibold text-xs mb-2">Legal</h4>
-              <ul className="text-slate-400 text-xs space-y-1">
-                <li><a href="#" className="hover:text-slate-200 transition">Privacy</a></li>
-                <li><a href="#" className="hover:text-slate-200 transition">Terms</a></li>
-                <li><a href="#" className="hover:text-slate-200 transition">Contact</a></li>
+              <h4 className="text-slate-200 font-bold text-xs uppercase tracking-wider mb-4">Legal</h4>
+              <ul className="space-y-2.5">
+                {[
+                  { name: 'Privacy Policy', href: '#' },
+                  { name: 'Terms of Service', href: '#' },
+                  { name: 'Contact Us', href: '#', external: true }
+                ].map((link, idx) => (
+                  <li key={idx}>
+                    <a 
+                      href={link.href} 
+                      className="text-slate-400 hover:text-brand-primary transition-all duration-300 text-xs flex items-center gap-1.5 group"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-700 group-hover:bg-brand-primary transition-colors"></span>
+                      <span className="group-hover:translate-x-1 transition-transform duration-300">{link.name}</span>
+                      {link.external && <ExternalLink className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-opacity" />}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
-          <div className="border-t border-slate-700/50 pt-4 text-center">
-            <p className="text-slate-500 text-xs">
+
+          {/* Bottom copyright and tag */}
+          <div className="border-t border-slate-800/80 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-slate-500 text-xs text-center sm:text-left">
               © {new Date().getFullYear()} FactGuard. All rights reserved.
+            </p>
+            <p className="text-slate-500 text-xs flex items-center gap-1 text-center sm:text-right">
+              Crafted with <Heart className="w-3 h-3 text-red-500 animate-pulse fill-red-500" /> & AI for absolute clarity.
             </p>
           </div>
         </div>
