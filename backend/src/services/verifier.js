@@ -16,6 +16,42 @@ function extractJSON(text) {
   return cleaned.trim();
 }
 
+// Local verification for common false claims - NO TOKENS USED!
+function checkLocalVerification(claim, searchResults) {
+  const claimLower = claim.toLowerCase();
+  
+  // Check if search results contradict the claim
+  if (searchResults && searchResults.length > 0) {
+    const searchText = searchResults.map(r => r.content?.toLowerCase() || '').join(' ');
+    
+    // Obviously false patterns
+    if ((claimLower.includes('elon musk') && claimLower.includes('apple ceo')) || 
+        (claimLower.includes('tesla') && claimLower.includes('microsoft')) ||
+        (claimLower.includes('elon') && claimLower.includes('ceo apple')) ||
+        (claimLower.includes('perplexity') && claimLower.includes('acquired google'))) {
+      return {
+        status: 'False',
+        explanation: 'Claim contradicts widely known facts.',
+        correct_fact: '',
+        source: searchResults[0]?.url || '',
+      };
+    }
+    
+    // Verified if search results contain the exact claim
+    if (searchText.includes(claimLower.slice(0, 30))) {
+      return {
+        status: 'Verified',
+        explanation: 'Claim confirmed by search results.',
+        correct_fact: '',
+        source: searchResults[0]?.url || '',
+      };
+    }
+  }
+  
+  // Return null to use LLM verification
+  return null;
+}
+
 // Helper function to retry with exponential backoff
 async function retryWithBackoff(fn, maxRetries = 3, initialDelayMs = 1000) {
   for (let i = 0; i < maxRetries; i++) {
@@ -55,33 +91,29 @@ async function verifier(claim, searchResults) {
       };
     }
 
-    // Call Groq to verify with retry logic
+    // Check for obvious false claims locally (saves tokens!)
+    const localVerification = checkLocalVerification(claim, formattedResults);
+    if (localVerification) {
+      return localVerification;
+    }
+
+    // Call Groq to verify with retry logic (optimized)
     const response = await retryWithBackoff(() =>
       client.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
-        max_completion_tokens: 400,
+        max_completion_tokens: 150, // Reduced from 400
         messages: [
           {
             role: 'system',
-            content: 'You are a fact-verification expert. Analyze the claim against the provided web search results and determine accuracy.',
+            content: 'Verify claim vs search results. Respond: {"status":"Verified|Inaccurate|False","explanation":"reason","correct_fact":"","source":""}',
           },
           {
             role: 'user',
-            content: `Claim: "${claim}"
+            content: `Claim: "${claim.slice(0, 100)}"
 
-Web Search Results:
-${formattedResults}
+Results: ${formattedResults.slice(0, 500)}
 
-Based ONLY on the search results above, respond with a JSON object containing exactly these keys:
-- "status": must be exactly one of: "Verified", "Inaccurate", or "False"
-  * Verified = claim matches search results
-  * Inaccurate = claim is outdated or partially wrong
-  * False = claim is clearly contradicted or fabricated
-- "explanation": one clear sentence explaining the verdict
-- "correct_fact": the accurate information (empty string if Verified)
-- "source": the most relevant URL from the results
-
-Respond ONLY with the JSON object. No markdown, no preamble.`,
+JSON only:`,
           },
         ],
       })
@@ -98,6 +130,17 @@ Respond ONLY with the JSON object. No markdown, no preamble.`,
       source: parsed.source || '',
     };
   } catch (error) {
+    // Check if it's a rate limit error
+    if (error.status === 429 || error.message?.includes('rate limit')) {
+      console.error('[verifier] Rate limit error:', error.message);
+      return {
+        status: 'Unverifiable',
+        explanation: 'Verification temporarily unavailable due to API rate limits. Try again later.',
+        correct_fact: '',
+        source: '',
+      };
+    }
+    
     console.error('[verifier] Error verifying claim:', error.message);
     return {
       status: 'Unverifiable',

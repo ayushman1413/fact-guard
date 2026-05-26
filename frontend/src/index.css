@@ -1,27 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html {
-  background-color: #0F172A;
-}
-
-body {
-  background-color: #0F172A;
-  color: #E2E8F0;
-  font-family: 'DM Sans', sans-serif;
-  margin: 0;
-  padding: 0;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+html { background: linear-gradient(135deg, #0F172A 0%, #1a2847 50%, #0F172A 100%); min-height: 100vh; }
+body { background: linear-gradient(135deg, #0F172A 0%, #1a2847 50%, #0F172A 100%); color: #E2E8F0; font-family: "DM Sans", sans-serif; margin: 0; padding: 0; min-height: 100vh; }
+* { box-sizing: border-box; }
+#root { min-height: 100vh; display: flex; flex-direction: column; background: linear-gradient(135deg, #0F172A 0%, #1a2847 50%, #0F172A 100%); }

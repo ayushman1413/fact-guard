@@ -2,49 +2,41 @@ import { motion } from 'framer-motion';
 import ClaimRow from './ClaimRow';
 
 export default function ResultsTable({ claims }) {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="w-full bg-slate-900/40 rounded-lg border border-slate-700 overflow-hidden shadow-xl"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="w-full space-y-3"
     >
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="sticky top-0 bg-slate-800/80 border-b border-slate-700">
-            <tr>
-              <th className="px-4 py-4 text-sm font-semibold text-slate-200">#</th>
-              <th className="px-4 py-4 text-sm font-semibold text-slate-200">
-                Claim
-              </th>
-              <th className="px-4 py-4 text-sm font-semibold text-slate-200">
-                Status
-              </th>
-              <th className="px-4 py-4 text-sm font-semibold text-slate-200">
-                Explanation
-              </th>
-              <th className="px-4 py-4 text-sm font-semibold text-slate-200">
-                Correct Fact
-              </th>
-              <th className="px-4 py-4 text-sm font-semibold text-slate-200">
-                Source
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {claims.map((claim, idx) => (
-              <ClaimRow
-                key={idx}
-                index={idx}
-                claim={claim.claim}
-                status={claim.status}
-                explanation={claim.explanation}
-                correct_fact={claim.correct_fact}
-                source={claim.source}
-              />
-            ))}
-          </tbody>
-        </table>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-white mb-2">Fact Check Results</h2>
+        <p className="text-slate-400">Detailed analysis of {claims.length} claim{claims.length !== 1 ? 's' : ''}</p>
+      </div>
+
+      <div className="space-y-3">
+        {claims.map((claim, idx) => (
+          <ClaimRow
+            key={idx}
+            index={idx}
+            claim={claim.claim}
+            status={claim.status}
+            explanation={claim.explanation}
+            correct_fact={claim.correct_fact}
+            source={claim.source}
+          />
+        ))}
       </div>
     </motion.div>
   );

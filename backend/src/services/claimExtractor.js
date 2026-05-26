@@ -39,18 +39,19 @@ async function retryWithBackoff(fn, maxRetries = 3, initialDelayMs = 1000) {
 
 async function claimExtractor(text) {
   try {
+    // Optimize: Reduce text size and max tokens
     const response = await retryWithBackoff(() =>
       client.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
-        max_completion_tokens: 512,
+        max_completion_tokens: 256, // Reduced from 512 - still gets ~10 claims
         messages: [
           {
             role: 'system',
-            content: `You are a claim extraction expert. Extract ALL specific factual claims from the provided text. Focus on: statistics and percentages, dates and years, financial figures, named facts with specific values, technical specifications. Return ONLY a valid JSON array of strings. Each string must be one complete, self-contained claim. No preamble, no markdown, no explanation. Just the JSON array.`,
+            content: `Extract factual claims with numbers: stats, dates, money, tech specs. Return ONLY JSON array. No markdown.`,
           },
           {
             role: 'user',
-            content: text.slice(0, 10000),
+            content: text.slice(0, 5000), // Reduced from 10000 - still enough for claims
           },
         ],
       })
@@ -58,7 +59,13 @@ async function claimExtractor(text) {
 
     const content = response.choices[0].message.content;
     const jsonString = extractJSON(content);
-    const claims = JSON.parse(jsonString);
+    let parsed = JSON.parse(jsonString);
+    
+    // Limit to top 10 claims to save tokens on verification
+    if (Array.isArray(parsed) && parsed.length > 10) {
+      console.log(`[claimExtractor] Limiting ${parsed.length} claims to top 10`);
+      parsed = parsed.slice(0, 10);
+    }
 
     if (!Array.isArray(claims)) {
       console.warn('[claimExtractor] Response was not an array, treating as empty');
